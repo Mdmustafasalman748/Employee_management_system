@@ -1,0 +1,41 @@
+@model Employee
+
+<div asp-validation-summary="ModelOnly" class="error-banner"></div>
+
+<div class="form-grid">
+    <label>
+        Full name
+        <input asp-for="Name" placeholder="Jane Doe" />
+        <span asp-validation-for="Name" class="field-error"></span>
+    </label>
+
+    <label>
+        Email
+        <input asp-for="Email" placeholder="jane@company.com" />
+        <span asp-validation-for="Email" class="field-error"></span>
+    </label>
+
+    <label>
+        Position
+        <input asp-for="Position" placeholder="Software Engineer" />
+        <span asp-validation-for="Position" class="field-error"></span>
+    </label>
+
+    <label>
+        Department
+        <input asp-for="Department" placeholder="Engineering" />
+        <span asp-validation-for="Department" class="field-error"></span>
+    </label>
+
+    <label>
+        Salary (USD)
+        <input asp-for="Salary" type="number" min="0" step="0.01" placeholder="65000" />
+        <span asp-validation-for="Salary" class="field-error"></span>
+    </label>
+
+    <label>
+        Hire date
+        <input asp-for="HireDate" type="date" />
+        <span asp-validation-for="HireDate" class="field-error"></span>
+    </label>
+</div>

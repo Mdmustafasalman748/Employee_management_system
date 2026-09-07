@@ -1,0 +1,37 @@
+@model Employee
+@{
+    ViewData["Title"] = "Delete employee";
+}
+
+<header class="page-header">
+    <div>
+        <p class="kicker">employee management system</p>
+        <h1>Delete employee</h1>
+        <p class="subhead">This can&rsquo;t be undone. Confirm you want to remove this record.</p>
+    </div>
+</header>
+
+<section class="panel">
+    <dl class="detail-list">
+        <dt>Name</dt>
+        <dd>@Model.Name</dd>
+        <dt>Email</dt>
+        <dd>@Model.Email</dd>
+        <dt>Position</dt>
+        <dd>@Model.Position</dd>
+        <dt>Department</dt>
+        <dd>@Model.Department</dd>
+        <dt>Salary</dt>
+        <dd>@Model.Salary.ToString("C0")</dd>
+        <dt>Hire date</dt>
+        <dd>@(Model.HireDate?.ToString("MMM d, yyyy") ?? "—")</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Delete employee</button>
+            <a asp-action="Index" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</section>

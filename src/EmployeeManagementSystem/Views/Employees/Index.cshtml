@@ -1,0 +1,69 @@
+@model IEnumerable<Employee>
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<header class="page-header">
+    <div>
+        <p class="kicker">employee management system</p>
+        <h1>Manage your team's records</h1>
+        <p class="subhead">
+            Add, update and remove employee information &mdash; backed by
+            SQL Server and built with ASP.NET Core MVC.
+        </p>
+    </div>
+
+    <a class="btn btn-primary" asp-action="Create">+ Add employee</a>
+</header>
+
+@if (TempData["Message"] is string message)
+{
+    <p class="success-banner">@message</p>
+}
+
+<section class="panel">
+    <div class="panel-head">
+        <h2>All employees</h2>
+        <span class="count-badge">@Model.Count()</span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="empty-state">No employees yet. Click &ldquo;Add employee&rdquo; to create the first record.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Position</th>
+                        <th>Department</th>
+                        <th>Salary</th>
+                        <th>Hire date</th>
+                        <th aria-label="Actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var employee in Model)
+                    {
+                        <tr>
+                            <td>@employee.Name</td>
+                            <td>@employee.Email</td>
+                            <td>@employee.Position</td>
+                            <td>@employee.Department</td>
+                            <td>@employee.Salary.ToString("C0")</td>
+                            <td>@(employee.HireDate?.ToString("MMM d, yyyy") ?? "—")</td>
+                            <td class="row-actions">
+                                <a class="link-btn" asp-action="Edit" asp-route-id="@employee.Id">Edit</a>
+                                <a class="link-btn link-btn-danger" asp-action="Delete" asp-route-id="@employee.Id">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

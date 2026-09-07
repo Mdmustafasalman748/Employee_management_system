@@ -1,0 +1,26 @@
+@model Employee
+@{
+    ViewData["Title"] = "New employee";
+}
+
+<header class="page-header">
+    <div>
+        <p class="kicker">employee management system</p>
+        <h1>New employee</h1>
+    </div>
+</header>
+
+<section class="panel">
+    <form asp-action="Create" method="post" class="employee-form">
+        <partial name="_Form" model="Model" />
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Add employee</button>
+            <a asp-action="Index" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
