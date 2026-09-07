@@ -1,8 +1,8 @@
 # Employee Management System
 
 A full-stack system for managing employee records — add, edit, delete and
-view employees. Built with **C#**, **ASP.NET Core MVC**, **Entity Framework
-Core**, and **SQL Server**.
+view employees. Built with **C#**, **ASP.NET Core MVC**, and **Entity
+Framework Core**.
 
 > This is a from-scratch rewrite of the original Next.js/React/Vercel
 > Postgres version, now running on the .NET stack.
@@ -12,13 +12,31 @@ Core**, and **SQL Server**.
 - Add, edit and delete employee records
 - Fields: name, email, position, department, salary, hire date
 - Server-rendered Razor views with client + server-side validation
-- Data persists in SQL Server, schema managed by EF Core Migrations
-  (applied automatically on startup — no manual setup step needed)
+- Schema created automatically on startup — no manual setup step needed
+
+## Database: SQL Server locally, SQLite in production
+
+- **Local dev**: SQL Server (via `docker compose` or LocalDB), schema
+  managed by checked-in EF Core migrations, applied automatically on
+  startup.
+- **Production (Render)**: SQLite — a single file, no separate database
+  service to provision. Render's free tier can't run SQL Server's
+  container anyway (it needs ~2GB RAM, which free/cheap tiers don't give
+  you), so this is what makes a free deployment possible at all. See
+  [Using real SQL Server in production](#using-real-sql-server-in-production-optional)
+  if you'd rather pay for that.
+- ⚠️ **Without a paid persistent disk, the SQLite file resets on every
+  redeploy** (and possibly after a long idle spin-down) — Render's free
+  tier has no persistent storage. Fine for a demo; not for data you care
+  about keeping. See below for how to attach a disk.
+
+`Program.cs` picks the provider automatically: SQL Server when a
+connection string is configured, SQLite otherwise.
 
 ## Project structure
 
 ```
-EmployeeManagementSystem.sln
+EmployeeManagementSystem.slnx
 src/EmployeeManagementSystem/
   Controllers/
     EmployeesController.cs   → Index/Create/Edit/Delete actions
@@ -26,14 +44,15 @@ src/EmployeeManagementSystem/
     Employee.cs               → entity + validation attributes
   Data/
     AppDbContext.cs            → EF Core DbContext
-    Migrations/                → EF Core schema migrations
+    Migrations/                → EF Core schema migrations (SQL Server)
   Views/
     Employees/                 → Index, Create, Edit, Delete, _Form partial
     Shared/_Layout.cshtml       → page shell
   wwwroot/css/site.css          → styling
-  Program.cs                    → app startup, DI, auto-migrate on boot
+  Program.cs                    → app startup, DB provider selection
   Dockerfile
 docker-compose.yml               → web + SQL Server, for local dev
+.github/workflows/ci-cd.yml      → build/test + deploy-to-Render hook
 ```
 
 ## Running locally with Docker (recommended)
@@ -62,35 +81,63 @@ dotnet run
 default — change `ConnectionStrings:DefaultConnection` if you're using a
 different SQL Server instance. Migrations apply automatically on startup.
 
-## Deploying (Railway or Render, via Docker)
+## Deploying to Render
 
 Vercel cannot host this app — it only runs Node/Python/Go/Ruby serverless
-functions and static sites, not ASP.NET Core or SQL Server. This project
-deploys as two Docker services instead:
+functions and static sites, not ASP.NET Core.
 
-1. **Database service**: deploy the `mcr.microsoft.com/mssql/server:2022-latest`
-   image as its own service. Set environment variables `ACCEPT_EULA=Y` and
-   `MSSQL_SA_PASSWORD=<a strong password>`, and attach a persistent volume
-   at `/var/opt/mssql` so data survives restarts.
-2. **Web service**: deploy this repo — the platform will detect
-   `src/EmployeeManagementSystem/Dockerfile` (on Render/Railway you may
-   need to set the Dockerfile path / build context explicitly to
-   `src/EmployeeManagementSystem`). Set these environment variables:
-   - `ASPNETCORE_ENVIRONMENT=Production`
-   - `ConnectionStrings__DefaultConnection=Server=<db-service-internal-host>,1433;Database=EmployeeManagementSystem;User Id=sa;Password=<same password as above>;TrustServerCertificate=True`
-     (Railway: the db service's internal hostname, e.g. `mssql.railway.internal`.
-     Render: use a Private Service for the database and its internal hostname.)
-3. Deploy. On first boot the web service applies EF Core migrations and
-   creates the `Employees` table automatically — no manual setup step.
+1. In the Render dashboard: **New +** → **Web Service** → connect this
+   GitHub repo.
+2. Render should detect `src/EmployeeManagementSystem/Dockerfile`
+   automatically via **Settings → Language: Docker**. If not, set:
+   - **Dockerfile Path**: `src/EmployeeManagementSystem/Dockerfile`
+   - **Docker Build Context Directory**: `src/EmployeeManagementSystem`
+3. No environment variables are required for the SQLite default — just
+   deploy. (Render sets `PORT` itself; the app already listens on it.)
+4. Once deployed, go to **Settings → Deploy Hook**, copy the URL, and add
+   it as a GitHub Actions secret named `RENDER_DEPLOY_HOOK_URL`
+   (repo **Settings → Secrets and variables → Actions**). From then on,
+   every push to `main` builds, tests, and redeploys automatically via
+   `.github/workflows/ci-cd.yml`.
+
+### Persisting data across redeploys (optional, paid)
+
+Attach a Render **Disk** (Starter plan or above) to the web service —
+e.g. mounted at `/data` — then set an environment variable:
+
+```
+ConnectionStrings__Sqlite=Data Source=/data/employees.db
+```
+
+### Using real SQL Server in production (optional, paid)
+
+The app already supports this — it just needs somewhere to run a SQL
+Server container with ~2GB+ RAM (Render Standard plan or higher, or
+Railway). Deploy `mcr.microsoft.com/mssql/server:2022-latest` as its own
+service with `ACCEPT_EULA=Y` and `MSSQL_SA_PASSWORD` set, a persistent
+disk at `/var/opt/mssql`, then set these on the web service:
+
+```
+DB_HOST=<db service's internal hostname>
+DB_PASSWORD=<same password as above>
+```
+
+(`DB_PORT` defaults to `1433`, `DB_NAME` to `EmployeeManagementSystem`,
+`DB_USER` to `sa` — override any of them if needed.) The app will use
+real SQL Server (and run the checked-in EF Core migrations) instead of
+SQLite whenever these are set.
 
 ## Migrations
 
-To add a new migration after changing `Employee.cs` or `AppDbContext.cs`:
+To add a new SQL Server migration after changing `Employee.cs` or
+`AppDbContext.cs`:
 
 ```bash
 cd src/EmployeeManagementSystem
 dotnet ef migrations add <Name> -o Data/Migrations
 ```
 
-Migrations apply automatically on app startup (`Program.cs`), both
-locally and in production.
+Migrations apply automatically on startup whenever SQL Server is the
+active provider. The SQLite path doesn't use migrations — it creates the
+schema directly from the current model (`EnsureCreated`) since it has no
+separate migration history of its own.

@@ -483,3 +483,8 @@ $RECYCLE.BIN/
 
 # Local secrets
 .env
+
+# Local SQLite database (production fallback, created at runtime)
+*.db
+*.db-shm
+*.db-wal

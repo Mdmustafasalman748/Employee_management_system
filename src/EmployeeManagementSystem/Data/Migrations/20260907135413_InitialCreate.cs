@@ -23,7 +23,7 @@ namespace EmployeeManagementSystem.Data.Migrations
                     Department = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Salary = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
                     HireDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()")
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

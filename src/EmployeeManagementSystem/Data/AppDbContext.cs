@@ -16,7 +16,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Employee>(entity =>
         {
             entity.ToTable("Employees");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
             entity.HasIndex(e => e.Email);
         });
     }

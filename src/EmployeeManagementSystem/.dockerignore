@@ -4,3 +4,4 @@ obj/
 **/obj/
 .vs/
 *.user
+*.db
