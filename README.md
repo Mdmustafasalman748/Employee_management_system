@@ -37,6 +37,8 @@ connection string is configured, SQLite otherwise.
 
 ```
 EmployeeManagementSystem.slnx
+Dockerfile                        → repo root is the build context (Render's default)
+docker-compose.yml                → web + SQL Server, for local dev
 src/EmployeeManagementSystem/
   Controllers/
     EmployeesController.cs   → Index/Create/Edit/Delete actions
@@ -50,8 +52,6 @@ src/EmployeeManagementSystem/
     Shared/_Layout.cshtml       → page shell
   wwwroot/css/site.css          → styling
   Program.cs                    → app startup, DB provider selection
-  Dockerfile
-docker-compose.yml               → web + SQL Server, for local dev
 .github/workflows/ci-cd.yml      → build/test + deploy-to-Render hook
 ```
 
@@ -88,10 +88,8 @@ functions and static sites, not ASP.NET Core.
 
 1. In the Render dashboard: **New +** → **Web Service** → connect this
    GitHub repo.
-2. Render should detect `src/EmployeeManagementSystem/Dockerfile`
-   automatically via **Settings → Language: Docker**. If not, set:
-   - **Dockerfile Path**: `src/EmployeeManagementSystem/Dockerfile`
-   - **Docker Build Context Directory**: `src/EmployeeManagementSystem`
+2. Render auto-detects the root-level `Dockerfile` and uses the repo root
+   as the build context — no path settings to change.
 3. No environment variables are required for the SQLite default — just
    deploy. (Render sets `PORT` itself; the app already listens on it.)
 4. Once deployed, go to **Settings → Deploy Hook**, copy the URL, and add
